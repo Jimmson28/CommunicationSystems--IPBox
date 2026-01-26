@@ -34,37 +34,43 @@
             sendButton = new Button();
             usernameTextBox = new TextBox();
             connectOrDisconnectButton = new Button();
-            paintButton = new Button();
-            Features = new Label();
-            playButton = new Button();
             ipaddressbox = new TextBox();
             portbox = new TextBox();
+            navigationList = new ListBox();
+            chatWindowTitle = new Label();
+            dropPanel = new Panel();
+            dropPanelTitle = new Label();
+            clientsList = new ListBox();
+            dropPanel.SuspendLayout();
             SuspendLayout();
             // 
             // chatWindow
             // 
+            chatWindow.BorderStyle = BorderStyle.FixedSingle;
             chatWindow.Font = new Font("Microsoft YaHei UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            chatWindow.Location = new Point(326, 10);
+            chatWindow.Location = new Point(739, 54);
             chatWindow.Name = "chatWindow";
-            chatWindow.Size = new Size(562, 398);
+            chatWindow.Size = new Size(556, 506);
             chatWindow.TabIndex = 0;
             chatWindow.Text = "";
             // 
             // messageBox
             // 
+            messageBox.BorderStyle = BorderStyle.FixedSingle;
             messageBox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            messageBox.Location = new Point(326, 414);
+            messageBox.Location = new Point(842, 566);
             messageBox.Multiline = true;
             messageBox.Name = "messageBox";
-            messageBox.Size = new Size(562, 46);
+            messageBox.Size = new Size(453, 45);
             messageBox.TabIndex = 1;
             // 
             // sendButton
             // 
+            sendButton.FlatStyle = FlatStyle.Flat;
             sendButton.Font = new Font("Microsoft YaHei UI", 10.2F);
-            sendButton.Location = new Point(186, 414);
+            sendButton.Location = new Point(739, 566);
             sendButton.Name = "sendButton";
-            sendButton.Size = new Size(134, 45);
+            sendButton.Size = new Size(94, 45);
             sendButton.TabIndex = 2;
             sendButton.Text = "Send";
             sendButton.UseVisualStyleBackColor = true;
@@ -72,96 +78,123 @@
             // 
             // usernameTextBox
             // 
+            usernameTextBox.BorderStyle = BorderStyle.FixedSingle;
             usernameTextBox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            usernameTextBox.Location = new Point(24, 10);
+            usernameTextBox.Location = new Point(25, 10);
             usernameTextBox.Name = "usernameTextBox";
-            usernameTextBox.Size = new Size(296, 29);
+            usernameTextBox.Size = new Size(295, 29);
             usernameTextBox.TabIndex = 4;
             usernameTextBox.Text = "Username";
             // 
             // connectOrDisconnectButton
             // 
+            connectOrDisconnectButton.FlatStyle = FlatStyle.Flat;
             connectOrDisconnectButton.Font = new Font("Microsoft YaHei UI", 10.2F);
-            connectOrDisconnectButton.Location = new Point(24, 414);
+            connectOrDisconnectButton.Location = new Point(25, 566);
             connectOrDisconnectButton.Name = "connectOrDisconnectButton";
-            connectOrDisconnectButton.Size = new Size(156, 45);
+            connectOrDisconnectButton.Size = new Size(296, 45);
             connectOrDisconnectButton.TabIndex = 5;
             connectOrDisconnectButton.Text = "Connect";
             connectOrDisconnectButton.UseVisualStyleBackColor = true;
             connectOrDisconnectButton.Click += connectOrDisconnectButton_Click;
             // 
-            // paintButton
-            // 
-            paintButton.Font = new Font("Microsoft YaHei UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            paintButton.Location = new Point(24, 136);
-            paintButton.Name = "paintButton";
-            paintButton.Size = new Size(156, 169);
-            paintButton.TabIndex = 6;
-            paintButton.Text = "Paint Mode";
-            paintButton.UseVisualStyleBackColor = true;
-            paintButton.Click += paintButton_Click;
-            // 
-            // Features
-            // 
-            Features.BackColor = Color.Azure;
-            Features.Font = new Font("Microsoft YaHei UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            Features.ForeColor = Color.Black;
-            Features.Location = new Point(25, 58);
-            Features.Name = "Features";
-            Features.Size = new Size(295, 52);
-            Features.TabIndex = 7;
-            Features.Text = "Features";
-            Features.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // playButton
-            // 
-            playButton.Font = new Font("Microsoft YaHei UI", 10.2F);
-            playButton.Location = new Point(187, 136);
-            playButton.Name = "playButton";
-            playButton.Size = new Size(134, 169);
-            playButton.TabIndex = 8;
-            playButton.Text = "Play";
-            playButton.UseVisualStyleBackColor = true;
-            playButton.Click += playButton_Click;
-            // 
             // ipaddressbox
             // 
+            ipaddressbox.BorderStyle = BorderStyle.FixedSingle;
             ipaddressbox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            ipaddressbox.Location = new Point(24, 379);
+            ipaddressbox.Location = new Point(25, 531);
             ipaddressbox.Name = "ipaddressbox";
-            ipaddressbox.Size = new Size(155, 29);
+            ipaddressbox.Size = new Size(153, 29);
             ipaddressbox.TabIndex = 9;
             ipaddressbox.Text = "IP Address";
             // 
             // portbox
             // 
+            portbox.BorderStyle = BorderStyle.FixedSingle;
             portbox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            portbox.Location = new Point(187, 379);
+            portbox.Location = new Point(187, 531);
             portbox.Name = "portbox";
-            portbox.Size = new Size(135, 29);
+            portbox.Size = new Size(133, 29);
             portbox.TabIndex = 10;
             portbox.Text = "Port";
+            // 
+            // navigationList
+            // 
+            navigationList.BorderStyle = BorderStyle.FixedSingle;
+            navigationList.FormattingEnabled = true;
+            navigationList.Items.AddRange(new object[] { "Broadcast", "Unicast" });
+            navigationList.Location = new Point(25, 54);
+            navigationList.Name = "navigationList";
+            navigationList.Size = new Size(295, 44);
+            navigationList.TabIndex = 11;
+            navigationList.SelectedIndexChanged += navigationList_SelectedIndexChanged;
+            // 
+            // chatWindowTitle
+            // 
+            chatWindowTitle.AutoSize = true;
+            chatWindowTitle.FlatStyle = FlatStyle.Flat;
+            chatWindowTitle.Font = new Font("Microsoft YaHei UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 238);
+            chatWindowTitle.Location = new Point(739, 9);
+            chatWindowTitle.Name = "chatWindowTitle";
+            chatWindowTitle.Size = new Size(211, 40);
+            chatWindowTitle.TabIndex = 12;
+            chatWindowTitle.Text = "ChatWindow";
+            // 
+            // dropPanel
+            // 
+            dropPanel.AllowDrop = true;
+            dropPanel.BackColor = Color.White;
+            dropPanel.Controls.Add(dropPanelTitle);
+            dropPanel.Location = new Point(327, 566);
+            dropPanel.Name = "dropPanel";
+            dropPanel.Size = new Size(406, 46);
+            dropPanel.TabIndex = 13;
+            dropPanel.DragDrop += dropPanel_DragDrop;
+            dropPanel.DragEnter += dropPanel_DragEnter;
+            // 
+            // dropPanelTitle
+            // 
+            dropPanelTitle.AutoSize = true;
+            dropPanelTitle.Font = new Font("Microsoft YaHei UI Light", 12F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            dropPanelTitle.Location = new Point(130, 8);
+            dropPanelTitle.Name = "dropPanelTitle";
+            dropPanelTitle.Size = new Size(144, 27);
+            dropPanelTitle.TabIndex = 0;
+            dropPanelTitle.Text = "Drop files here";
+            // 
+            // clientsList
+            // 
+            clientsList.BorderStyle = BorderStyle.FixedSingle;
+            clientsList.FormattingEnabled = true;
+            clientsList.Location = new Point(25, 115);
+            clientsList.Name = "clientsList";
+            clientsList.Size = new Size(295, 401);
+            clientsList.TabIndex = 14;
+            clientsList.SelectedIndexChanged += clientsList_SelectedIndexChanged;
             // 
             // GUI
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SlateGray;
-            ClientSize = new Size(900, 472);
-            Controls.Add(portbox);
-            Controls.Add(ipaddressbox);
-            Controls.Add(playButton);
-            Controls.Add(Features);
-            Controls.Add(paintButton);
-            Controls.Add(connectOrDisconnectButton);
-            Controls.Add(usernameTextBox);
-            Controls.Add(sendButton);
+            ClientSize = new Size(1307, 624);
+            Controls.Add(clientsList);
+            Controls.Add(dropPanel);
+            Controls.Add(chatWindowTitle);
             Controls.Add(messageBox);
             Controls.Add(chatWindow);
+            Controls.Add(sendButton);
+            Controls.Add(navigationList);
+            Controls.Add(portbox);
+            Controls.Add(ipaddressbox);
+            Controls.Add(connectOrDisconnectButton);
+            Controls.Add(usernameTextBox);
             Font = new Font("Corbel", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "GUI";
             Text = "CommunicationSystems";
+            dropPanel.ResumeLayout(false);
+            dropPanel.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -173,10 +206,12 @@
         private Button sendButton;
         private TextBox usernameTextBox;
         private Button connectOrDisconnectButton;
-        private Button paintButton;
-        private Label Features;
-        private Button playButton;
         private TextBox ipaddressbox;
         private TextBox portbox;
+        private ListBox navigationList;
+        private Label chatWindowTitle;
+        private Panel dropPanel;
+        private Label dropPanelTitle;
+        private ListBox clientsList;
     }
 }

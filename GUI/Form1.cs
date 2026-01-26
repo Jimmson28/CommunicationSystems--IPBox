@@ -18,10 +18,7 @@ namespace GUI
         {
             if (client.isClientConnected)
             {
-                client.SendTcp("Bye!");
-                usernameTextBox.Enabled = true;
-                connectOrDisconnectButton.Text = "Connect";
-                client.disconnect();
+                 client.SendTcp("DISCONNECT");
             }
             else
             {
@@ -42,11 +39,29 @@ namespace GUI
         }
         private void sendButton_Click(object sender, EventArgs e)
         {
-            string msg = messageBox.Text;
-            if (!string.IsNullOrWhiteSpace(msg))
+            navigationList.BeginUpdate();
+            navigationList.EndUpdate();
+
+            if (navigationList.SelectedItem.ToString() == "Broadcast")
             {
-                client.SendTcp(msg);
-                messageBox.Clear();
+                string msg = "BROADCAST" + messageBox.Text;
+                if (!string.IsNullOrWhiteSpace(msg))
+                {
+                    client.SendTcp(msg);
+                    messageBox.Clear();
+                }
+            }
+            else if (navigationList.SelectedItem.ToString() == "Unicast")
+            {
+                if(clientsList.SelectedIndex != -1)
+                {
+                    string msg = "UNICAST " + clientsList.SelectedItem.ToString() + " " + messageBox.Text;
+                    if (!string.IsNullOrWhiteSpace(msg))
+                    {
+                        client.SendTcp(msg);
+                        messageBox.Clear();
+                    }
+                }              
             }
         }
         private void HandleMessage(string message)
@@ -56,11 +71,31 @@ namespace GUI
                 this.Invoke(new Action(() => HandleMessage(message)));
                 return;
             }
+            
+            if (message.Contains("[CLIENTSLIST UPDATE]"))
+            {
+                handleClientsList(message);
+            }
+            else if(message.Contains(usernameTextBox.Text) && message.Contains("has disconnected"))
+            {
+                string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                chatWindow.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
 
-            string timestamp = DateTime.Now.ToString("HH:mm:ss");
-            chatWindow.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
-            chatWindow.SelectionStart = chatWindow.Text.Length;
-            chatWindow.ScrollToCaret();
+                client.disconnect();
+
+                usernameTextBox.Enabled = true;
+                connectOrDisconnectButton.Text = "Connect";
+                connectOrDisconnectButton.Enabled = true;
+
+                clientsList.Items.Clear();
+            }
+            else
+            {
+                string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                chatWindow.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
+                chatWindow.SelectionStart = chatWindow.Text.Length;
+                chatWindow.ScrollToCaret();
+            }  
         }
         private void HandleLog(string log)
         {
@@ -71,15 +106,60 @@ namespace GUI
             }
             chatWindow.AppendText($"[SYSTEM]: {log}{Environment.NewLine}");
         }
-
-        private void paintButton_Click(object sender, EventArgs e)
+        private void dropPanel_DragEnter(object sender, DragEventArgs e)
         {
-
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
         }
 
-        private void playButton_Click(object sender, EventArgs e)
+        private void dropPanel_DragDrop(object sender, DragEventArgs e)
         {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
+            if (files != null && files.Length > 0)
+            {
+                string filePath = files[0];
+                //Thread t = new Thread(() => SendFileToServer(filePath));
+                //t.Start();
+            }
+        }
+
+        private void navigationList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (navigationList != null)
+            {
+                string choosenOption = navigationList.SelectedItem.ToString();
+            }
+        }
+
+        private void clientsList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (navigationList != null)
+            {
+                string choosenClient = clientsList.SelectedItem.ToString();
+            }
+        }
+        private void handleClientsList(string message)
+        {          
+            clientsList.Items.Clear();
+
+            int spaceIndex = message.IndexOf(' ', 26);
+            string onlyNames = message.Substring(spaceIndex+1);
+            string[] users = onlyNames.Split(',');
+
+            foreach (string user in users) 
+            {
+                if (user != usernameTextBox.Text)
+                {
+                    clientsList.Items.Add(user);
+                }
+            }
         }
     }
 }
