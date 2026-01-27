@@ -1,0 +1,3 @@
+C:\Build\CS\ChatLogic.dll
+C:\Build\CS\ChatLogic.deps.json
+C:\Build\CS\ChatLogic.pdb

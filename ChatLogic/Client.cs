@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ChatLogic
 {
@@ -70,7 +69,7 @@ namespace ChatLogic
                     Array.Copy(receivingBuffer, data, bytesRead);
                     string message = Encoding.UTF8.GetString(data);
                     
-                    OnMessageReceived?.Invoke($"[TCP]: {message}");
+                    OnMessageReceived?.Invoke($"{message}");
                     networkStream.BeginRead(receivingBuffer, 0, receivingBuffer.Length, OnReceivingDataViaTCP, null);
                 }
                 else
