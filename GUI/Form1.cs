@@ -81,88 +81,124 @@ namespace GUI
         }
 
         //funckcja obslugujaca przychodzace wiadomosci z servera
-        private void HandleMessage(string message)
+        private void HandleMessage(string rawMessage)
         {
             if (this.InvokeRequired)
             {
-                this.Invoke(new Action(() => HandleMessage(message)));
+                this.Invoke(new Action(() => HandleMessage(rawMessage)));
                 return;
             }
+            string[] packets = rawMessage.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-            if (isDownloading)
+            foreach (string message in packets)
             {
-                string headerPrefix = "[DOWNLOADING FILE FROM SERVER]|";
-                if (message.StartsWith(headerPrefix))
+                if (isDownloading)
                 {
-                    //[DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|
-                    string[] parts = message.Split('|');
-                    if (parts.Length >= 3)
+                    if (message.StartsWith("[DOWNLOADING FILE FROM SERVER]|"))
                     {
-                        currentDownloadingFileSize = long.Parse(parts[1]); // rozzmiar base64
-                        currentDownloadingFileName = parts[2];
-                        downloadBuffer.Clear();
-
-                        string fullHeader = parts[0] + "|" + parts[1] + "|" + parts[2] + "|";
-
-                        if (message.Length > fullHeader.Length)
-                        {
-                            downloadBuffer.Append(message.Substring(fullHeader.Length));
-                        }
+                 
+                        StartNewDownload(message);
+                    }
+                    else
+                    {
+                        downloadBuffer.Append(message);
+                        CheckIfDownloadFinished();
+                    }
+                    continue;
+                }
+                if (message.StartsWith("[DOWNLOADING FILE FROM SERVER]|"))
+                {
+                    StartNewDownload(message);
+                }
+                else if (message.Contains("[CLIENTSLIST UPDATE]"))
+                {
+                    handleClientsList(message);
+                }
+                else if (message.Contains(usernameTextBox.Text) && message.Contains("has disconnected"))
+                {
+                    string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                    chatWindow.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
+                    client.disconnect();
+                    usernameTextBox.Enabled = true;
+                    connectOrDisconnectButton.Text = "Connect";
+                    connectOrDisconnectButton.Enabled = true;
+                    clientsList.Items.Clear();
+                }
+                else if (message.Contains("[FILE TRANSFER ACCEPTED]"))
+                {
+                    if (uploadQueue.Count > 0)
+                    {
+                        client.SendTcp($"FILEDATA|{currentFileInBase64}");
+                        ListViewItem finishedItem = uploadQueue.Dequeue();
+                        currentFileInBase64 = "";
+                        sendFileDataOnServer();
+                    }
+                }
+                else if (message.Contains("[FILES ON THE SERVER]"))
+                {
+                    handleFilesList(message);
+                }
+                else if (message.StartsWith("[HARDWARE STATUS]"))
+                {
+                    string[] parts = message.Split('|');
+                    if (parts.Length >= 7)
+                    {
+                        lblValNet.Text = parts[1];
+                        lblValTemp.Text = parts[2];
+                        lblValLoad.Text = parts[3];
+                        lblValRam.Text = parts[4];
+                        lblValFreq.Text = parts[5];
+                        lblValDisc.Text = parts[6];
                     }
                 }
                 else
                 {
-                    downloadBuffer.Append(message);
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        chatWindow.AppendText($"[{timestamp}] [TCP]: {message}{Environment.NewLine}");
+                        chatWindow.SelectionStart = chatWindow.Text.Length;
+                        chatWindow.ScrollToCaret();
+                    }
                 }
+            }
+        }
+        private void StartNewDownload(string message)
+        {
+            try
+            {
+                string headerPrefix = "[DOWNLOADING FILE FROM SERVER]|";
+                string[] parts = message.Split('|');
 
-                if (downloadBuffer.Length >= currentDownloadingFileSize)
+                if (parts.Length >= 3)
                 {
-                    FinishDownloading();
-                }
-                return;
-            }
-            if (message.StartsWith("[DOWNLOADING FILE FROM SERVER]|"))
-            {
-                isDownloading = true;
-                HandleMessage(message);
-            }
-            else if (message.Contains("[CLIENTSLIST UPDATE]"))
-            {
-                handleClientsList(message);
-            }
-            else if (message.Contains(usernameTextBox.Text) && message.Contains("has disconnected"))
-            {
-                string timestamp = DateTime.Now.ToString("HH:mm:ss");
-                chatWindow.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
+                    currentDownloadingFileSize = long.Parse(parts[1]);
+                    currentDownloadingFileName = parts[2];
+                    string fullHeader = headerPrefix + parts[1] + "|" + parts[2] + "|";
 
-                client.disconnect();
+                    downloadBuffer.Clear();
+                    isDownloading = true;
 
-                usernameTextBox.Enabled = true;
-                connectOrDisconnectButton.Text = "Connect";
-                connectOrDisconnectButton.Enabled = true;
-                clientsList.Items.Clear();
-            }
-            else if (message.Contains("[FILE TRANSFER ACCEPTED]"))
-            {
-                if (uploadQueue.Count > 0)
-                {
-                    client.SendTcp($"FILEDATA|{currentFileInBase64}");
-                    ListViewItem finishedItem = uploadQueue.Dequeue();
-                    currentFileInBase64 = "";
-
-                    sendFileDataOnServer();
+                    if (message.Length >= fullHeader.Length)
+                    {
+                        string data = message.Substring(fullHeader.Length);
+                        downloadBuffer.Append(data);
+                        CheckIfDownloadFinished();
+                    }
                 }
             }
-            else if (message.Contains("[FILES ON THE SERVER]"))
+            catch (Exception ex)
             {
-                handleFilesList(message);
+                MessageBox.Show("B³¹d startu pobierania: " + ex.Message);
+                isDownloading = false;
             }
-            else
+        }
+
+        private void CheckIfDownloadFinished()
+        {
+            if (downloadBuffer.Length >= currentDownloadingFileSize)
             {
-                string timestamp = DateTime.Now.ToString("HH:mm:ss");
-                chatWindow.AppendText($"[{timestamp}] [TCP]: {message}{Environment.NewLine}");
-                chatWindow.SelectionStart = chatWindow.Text.Length;
-                chatWindow.ScrollToCaret();
+                FinishDownloading();
             }
         }
         //funckja obslugi logow systemowych
@@ -181,6 +217,9 @@ namespace GUI
             try
             {
                 string finalBase64 = downloadBuffer.ToString();
+
+                finalBase64 = finalBase64.Trim().Replace("\r", "").Replace("\n", "").Replace(" ", "");
+
                 byte[] fileBytes = Convert.FromBase64String(finalBase64);
 
                 string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -343,7 +382,12 @@ namespace GUI
         {
             if (filesOnTheServer.SelectedItems.Count > 0)
             {
-                string fileName = filesOnTheServer.SelectedItems[0].Text;
+                string fileName = "";
+                foreach (ListViewItem file in filesOnTheServer.SelectedItems) 
+                {
+                    fileName += file.Text + ",";
+                }
+                fileName = fileName.TrimEnd(',');
                 var res = MessageBox.Show($"Delete {fileName}?", "Confirm", MessageBoxButtons.YesNo);
                 if (res == DialogResult.Yes)
                 {

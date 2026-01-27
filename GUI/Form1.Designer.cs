@@ -56,17 +56,32 @@
             label2 = new Label();
             uploadButton = new Button();
             clearFilesList = new Button();
+            label3 = new Label();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            lblValDisc = new Label();
+            lblValFreq = new Label();
+            lblValRam = new Label();
+            lblValLoad = new Label();
+            lblValTemp = new Label();
+            label9 = new Label();
+            lblValNet = new Label();
+            label5 = new Label();
+            label4 = new Label();
+            label8 = new Label();
+            label7 = new Label();
+            label6 = new Label();
             dropPanel.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
+            tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
             // chatWindow
             // 
             chatWindow.BorderStyle = BorderStyle.FixedSingle;
             chatWindow.Font = new Font("Microsoft YaHei UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            chatWindow.Location = new Point(739, 54);
+            chatWindow.Location = new Point(917, 48);
             chatWindow.Name = "chatWindow";
-            chatWindow.Size = new Size(556, 506);
+            chatWindow.Size = new Size(616, 497);
             chatWindow.TabIndex = 0;
             chatWindow.Text = "";
             // 
@@ -74,19 +89,19 @@
             // 
             messageBox.BorderStyle = BorderStyle.FixedSingle;
             messageBox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            messageBox.Location = new Point(842, 566);
+            messageBox.Location = new Point(1001, 551);
             messageBox.Multiline = true;
             messageBox.Name = "messageBox";
-            messageBox.Size = new Size(453, 45);
+            messageBox.Size = new Size(532, 44);
             messageBox.TabIndex = 1;
             // 
             // sendButton
             // 
             sendButton.FlatStyle = FlatStyle.Flat;
             sendButton.Font = new Font("Microsoft YaHei UI", 10.2F);
-            sendButton.Location = new Point(739, 566);
+            sendButton.Location = new Point(917, 551);
             sendButton.Name = "sendButton";
-            sendButton.Size = new Size(94, 45);
+            sendButton.Size = new Size(78, 44);
             sendButton.TabIndex = 2;
             sendButton.Text = "Send";
             sendButton.UseVisualStyleBackColor = true;
@@ -95,10 +110,10 @@
             // usernameTextBox
             // 
             usernameTextBox.BorderStyle = BorderStyle.FixedSingle;
-            usernameTextBox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            usernameTextBox.Location = new Point(25, 10);
+            usernameTextBox.Font = new Font("Microsoft YaHei UI Light", 10.2F);
+            usernameTextBox.Location = new Point(3, 12);
             usernameTextBox.Name = "usernameTextBox";
-            usernameTextBox.Size = new Size(252, 29);
+            usernameTextBox.Size = new Size(252, 30);
             usernameTextBox.TabIndex = 4;
             usernameTextBox.Text = "Username";
             // 
@@ -106,7 +121,7 @@
             // 
             connectOrDisconnectButton.FlatStyle = FlatStyle.Flat;
             connectOrDisconnectButton.Font = new Font("Microsoft YaHei UI", 10.2F);
-            connectOrDisconnectButton.Location = new Point(25, 566);
+            connectOrDisconnectButton.Location = new Point(3, 550);
             connectOrDisconnectButton.Name = "connectOrDisconnectButton";
             connectOrDisconnectButton.Size = new Size(252, 45);
             connectOrDisconnectButton.TabIndex = 5;
@@ -117,31 +132,32 @@
             // ipaddressbox
             // 
             ipaddressbox.BorderStyle = BorderStyle.FixedSingle;
-            ipaddressbox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            ipaddressbox.Location = new Point(25, 531);
+            ipaddressbox.Font = new Font("Microsoft YaHei UI Light", 10.2F);
+            ipaddressbox.Location = new Point(3, 48);
             ipaddressbox.Name = "ipaddressbox";
-            ipaddressbox.Size = new Size(165, 29);
+            ipaddressbox.Size = new Size(252, 30);
             ipaddressbox.TabIndex = 9;
             ipaddressbox.Text = "IP Address";
             // 
             // portbox
             // 
             portbox.BorderStyle = BorderStyle.FixedSingle;
-            portbox.Font = new Font("Microsoft YaHei UI", 10.2F);
-            portbox.Location = new Point(196, 531);
+            portbox.Font = new Font("Microsoft YaHei UI Light", 10.2F);
+            portbox.Location = new Point(3, 84);
             portbox.Name = "portbox";
-            portbox.Size = new Size(81, 29);
+            portbox.Size = new Size(252, 30);
             portbox.TabIndex = 10;
             portbox.Text = "Port";
             // 
             // navigationList
             // 
             navigationList.BorderStyle = BorderStyle.FixedSingle;
+            navigationList.Font = new Font("Microsoft YaHei UI Light", 10.2F);
             navigationList.FormattingEnabled = true;
             navigationList.Items.AddRange(new object[] { "Broadcast", "Unicast" });
-            navigationList.Location = new Point(25, 54);
+            navigationList.Location = new Point(3, 120);
             navigationList.Name = "navigationList";
-            navigationList.Size = new Size(252, 44);
+            navigationList.Size = new Size(252, 48);
             navigationList.TabIndex = 11;
             navigationList.SelectedIndexChanged += navigationList_SelectedIndexChanged;
             // 
@@ -150,7 +166,7 @@
             chatWindowTitle.AutoSize = true;
             chatWindowTitle.FlatStyle = FlatStyle.Flat;
             chatWindowTitle.Font = new Font("Microsoft YaHei UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 238);
-            chatWindowTitle.Location = new Point(739, 9);
+            chatWindowTitle.Location = new Point(917, 5);
             chatWindowTitle.Name = "chatWindowTitle";
             chatWindowTitle.Size = new Size(211, 40);
             chatWindowTitle.TabIndex = 12;
@@ -160,10 +176,11 @@
             // 
             dropPanel.AllowDrop = true;
             dropPanel.BackColor = Color.White;
+            dropPanel.BorderStyle = BorderStyle.FixedSingle;
             dropPanel.Controls.Add(dropPanelTitle);
-            dropPanel.Location = new Point(365, 531);
+            dropPanel.Location = new Point(461, 550);
             dropPanel.Name = "dropPanel";
-            dropPanel.Size = new Size(368, 81);
+            dropPanel.Size = new Size(450, 45);
             dropPanel.TabIndex = 13;
             dropPanel.DragDrop += dropPanel_DragDrop;
             dropPanel.DragEnter += dropPanel_DragEnter;
@@ -172,7 +189,7 @@
             // 
             dropPanelTitle.AutoSize = true;
             dropPanelTitle.Font = new Font("Microsoft YaHei UI Light", 12F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            dropPanelTitle.Location = new Point(3, 2);
+            dropPanelTitle.Location = new Point(3, 18);
             dropPanelTitle.Name = "dropPanelTitle";
             dropPanelTitle.Size = new Size(144, 27);
             dropPanelTitle.TabIndex = 0;
@@ -181,10 +198,11 @@
             // clientsList
             // 
             clientsList.BorderStyle = BorderStyle.FixedSingle;
+            clientsList.Font = new Font("Microsoft YaHei UI Light", 10.2F);
             clientsList.FormattingEnabled = true;
-            clientsList.Location = new Point(25, 115);
+            clientsList.Location = new Point(3, 174);
             clientsList.Name = "clientsList";
-            clientsList.Size = new Size(252, 401);
+            clientsList.Size = new Size(252, 370);
             clientsList.TabIndex = 14;
             clientsList.SelectedIndexChanged += clientsList_SelectedIndexChanged;
             // 
@@ -193,9 +211,9 @@
             filesListToSend.BorderStyle = BorderStyle.FixedSingle;
             filesListToSend.Columns.AddRange(new ColumnHeader[] { Filename, Size });
             filesListToSend.Font = new Font("Microsoft YaHei UI Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            filesListToSend.Location = new Point(283, 341);
+            filesListToSend.Location = new Point(261, 369);
             filesListToSend.Name = "filesListToSend";
-            filesListToSend.Size = new Size(450, 175);
+            filesListToSend.Size = new Size(648, 175);
             filesListToSend.TabIndex = 15;
             filesListToSend.UseCompatibleStateImageBehavior = false;
             filesListToSend.View = View.Details;
@@ -215,7 +233,7 @@
             label1.AutoSize = true;
             label1.FlatStyle = FlatStyle.Flat;
             label1.Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 238);
-            label1.Location = new Point(283, 311);
+            label1.Location = new Point(261, 336);
             label1.Name = "label1";
             label1.Size = new Size(201, 27);
             label1.TabIndex = 16;
@@ -227,9 +245,9 @@
             filesOnTheServer.Columns.AddRange(new ColumnHeader[] { Plik, rozmiar });
             filesOnTheServer.ContextMenuStrip = contextMenuStrip1;
             filesOnTheServer.Font = new Font("Microsoft YaHei UI Light", 10.2F);
-            filesOnTheServer.Location = new Point(283, 145);
+            filesOnTheServer.Location = new Point(261, 171);
             filesOnTheServer.Name = "filesOnTheServer";
-            filesOnTheServer.Size = new Size(450, 163);
+            filesOnTheServer.Size = new Size(648, 162);
             filesOnTheServer.TabIndex = 17;
             filesOnTheServer.UseCompatibleStateImageBehavior = false;
             filesOnTheServer.View = View.Details;
@@ -249,26 +267,26 @@
             contextMenuStrip1.ImageScalingSize = new Size(20, 20);
             contextMenuStrip1.Items.AddRange(new ToolStripItem[] { downloadToolStripMenuItem, delateToolStripMenuItem, cancelToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(211, 104);
+            contextMenuStrip1.Size = new Size(148, 76);
             // 
             // downloadToolStripMenuItem
             // 
             downloadToolStripMenuItem.Name = "downloadToolStripMenuItem";
-            downloadToolStripMenuItem.Size = new Size(210, 24);
+            downloadToolStripMenuItem.Size = new Size(147, 24);
             downloadToolStripMenuItem.Text = "Download";
             downloadToolStripMenuItem.Click += downloadToolStripMenuItem_Click;
             // 
             // delateToolStripMenuItem
             // 
             delateToolStripMenuItem.Name = "delateToolStripMenuItem";
-            delateToolStripMenuItem.Size = new Size(210, 24);
+            delateToolStripMenuItem.Size = new Size(147, 24);
             delateToolStripMenuItem.Text = "Delate";
             delateToolStripMenuItem.Click += delateToolStripMenuItem_Click;
             // 
             // cancelToolStripMenuItem
             // 
             cancelToolStripMenuItem.Name = "cancelToolStripMenuItem";
-            cancelToolStripMenuItem.Size = new Size(210, 24);
+            cancelToolStripMenuItem.Size = new Size(147, 24);
             cancelToolStripMenuItem.Text = "Cancel";
             cancelToolStripMenuItem.Click += cancelToolStripMenuItem_Click;
             // 
@@ -277,7 +295,7 @@
             label2.AutoSize = true;
             label2.FlatStyle = FlatStyle.Flat;
             label2.Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 238);
-            label2.Location = new Point(283, 115);
+            label2.Location = new Point(261, 141);
             label2.Name = "label2";
             label2.Size = new Size(280, 27);
             label2.TabIndex = 18;
@@ -287,9 +305,9 @@
             // 
             uploadButton.FlatStyle = FlatStyle.Flat;
             uploadButton.Font = new Font("Microsoft YaHei UI", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            uploadButton.Location = new Point(283, 531);
+            uploadButton.Location = new Point(361, 550);
             uploadButton.Name = "uploadButton";
-            uploadButton.Size = new Size(76, 39);
+            uploadButton.Size = new Size(94, 45);
             uploadButton.TabIndex = 19;
             uploadButton.Text = "Upload";
             uploadButton.UseVisualStyleBackColor = true;
@@ -299,20 +317,184 @@
             // 
             clearFilesList.FlatStyle = FlatStyle.Flat;
             clearFilesList.Font = new Font("Microsoft YaHei UI", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
-            clearFilesList.Location = new Point(283, 576);
+            clearFilesList.Location = new Point(261, 550);
             clearFilesList.Name = "clearFilesList";
-            clearFilesList.Size = new Size(76, 36);
+            clearFilesList.Size = new Size(94, 45);
             clearFilesList.TabIndex = 20;
             clearFilesList.Text = "Clear";
             clearFilesList.UseVisualStyleBackColor = true;
             clearFilesList.Click += clearFilesList_Click;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.FlatStyle = FlatStyle.Flat;
+            label3.Font = new Font("Microsoft YaHei UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 238);
+            label3.Location = new Point(261, 12);
+            label3.Name = "label3";
+            label3.Size = new Size(222, 27);
+            label3.TabIndex = 21;
+            label3.Text = "HARDWARE STATUS";
+            // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.CellBorderStyle = TableLayoutPanelCellBorderStyle.Outset;
+            tableLayoutPanel1.ColumnCount = 6;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 23.7241383F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 9.907121F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 15.3250771F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16.666666F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18.2068958F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16.1379318F));
+            tableLayoutPanel1.Controls.Add(lblValDisc, 5, 1);
+            tableLayoutPanel1.Controls.Add(lblValFreq, 4, 1);
+            tableLayoutPanel1.Controls.Add(lblValRam, 3, 1);
+            tableLayoutPanel1.Controls.Add(lblValLoad, 2, 1);
+            tableLayoutPanel1.Controls.Add(lblValTemp, 1, 1);
+            tableLayoutPanel1.Controls.Add(label9, 2, 0);
+            tableLayoutPanel1.Controls.Add(lblValNet, 0, 1);
+            tableLayoutPanel1.Controls.Add(label5, 1, 0);
+            tableLayoutPanel1.Controls.Add(label4, 0, 0);
+            tableLayoutPanel1.Controls.Add(label8, 5, 0);
+            tableLayoutPanel1.Controls.Add(label7, 4, 0);
+            tableLayoutPanel1.Controls.Add(label6, 3, 0);
+            tableLayoutPanel1.Font = new Font("Microsoft YaHei UI Light", 10.2F);
+            tableLayoutPanel1.Location = new Point(263, 48);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 2;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 23.7623768F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 76.2376251F));
+            tableLayoutPanel1.Size = new Size(648, 87);
+            tableLayoutPanel1.TabIndex = 22;
+            // 
+            // lblValDisc
+            // 
+            lblValDisc.AutoSize = true;
+            lblValDisc.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValDisc.Location = new Point(544, 23);
+            lblValDisc.Name = "lblValDisc";
+            lblValDisc.Size = new Size(15, 19);
+            lblValDisc.TabIndex = 11;
+            lblValDisc.Text = "-";
+            // 
+            // lblValFreq
+            // 
+            lblValFreq.AutoSize = true;
+            lblValFreq.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValFreq.Location = new Point(427, 23);
+            lblValFreq.Name = "lblValFreq";
+            lblValFreq.Size = new Size(15, 19);
+            lblValFreq.TabIndex = 10;
+            lblValFreq.Text = "-";
+            // 
+            // lblValRam
+            // 
+            lblValRam.AutoSize = true;
+            lblValRam.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValRam.Location = new Point(320, 23);
+            lblValRam.Name = "lblValRam";
+            lblValRam.Size = new Size(15, 19);
+            lblValRam.TabIndex = 9;
+            lblValRam.Text = "-";
+            // 
+            // lblValLoad
+            // 
+            lblValLoad.AutoSize = true;
+            lblValLoad.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValLoad.Location = new Point(221, 23);
+            lblValLoad.Name = "lblValLoad";
+            lblValLoad.Size = new Size(15, 19);
+            lblValLoad.TabIndex = 8;
+            lblValLoad.Text = "-";
+            // 
+            // lblValTemp
+            // 
+            lblValTemp.AutoSize = true;
+            lblValTemp.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValTemp.Location = new Point(157, 23);
+            lblValTemp.Name = "lblValTemp";
+            lblValTemp.Size = new Size(15, 19);
+            lblValTemp.TabIndex = 7;
+            lblValTemp.Text = "-";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label9.Location = new Point(221, 2);
+            label9.Name = "label9";
+            label9.Size = new Size(68, 19);
+            label9.TabIndex = 6;
+            label9.Text = "CPU Load";
+            // 
+            // lblValNet
+            // 
+            lblValNet.AutoSize = true;
+            lblValNet.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            lblValNet.Location = new Point(5, 23);
+            lblValNet.Name = "lblValNet";
+            lblValNet.Size = new Size(15, 19);
+            lblValNet.TabIndex = 5;
+            lblValNet.Text = "-";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label5.Location = new Point(157, 2);
+            label5.Name = "label5";
+            label5.Size = new Size(43, 19);
+            label5.TabIndex = 1;
+            label5.Text = "Temp";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label4.Location = new Point(5, 2);
+            label4.Name = "label4";
+            label4.Size = new Size(59, 19);
+            label4.TabIndex = 0;
+            label4.Text = "Network";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label8.Location = new Point(544, 2);
+            label8.Name = "label8";
+            label8.Size = new Size(37, 19);
+            label8.TabIndex = 4;
+            label8.Text = "DISC";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label7.Location = new Point(427, 2);
+            label7.Name = "label7";
+            label7.Size = new Size(66, 19);
+            label7.TabIndex = 3;
+            label7.Text = "CPU Freq";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Microsoft YaHei UI Light", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 238);
+            label6.Location = new Point(320, 2);
+            label6.Name = "label6";
+            label6.Size = new Size(38, 19);
+            label6.TabIndex = 2;
+            label6.Text = "RAM";
             // 
             // GUI
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SlateGray;
-            ClientSize = new Size(1307, 624);
+            ClientSize = new Size(1539, 603);
+            Controls.Add(tableLayoutPanel1);
+            Controls.Add(label3);
             Controls.Add(clearFilesList);
             Controls.Add(uploadButton);
             Controls.Add(label2);
@@ -337,6 +519,8 @@
             dropPanel.ResumeLayout(false);
             dropPanel.PerformLayout();
             contextMenuStrip1.ResumeLayout(false);
+            tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -369,5 +553,19 @@
         private ToolStripMenuItem downloadToolStripMenuItem;
         private ToolStripMenuItem delateToolStripMenuItem;
         private ToolStripMenuItem cancelToolStripMenuItem;
+        private Label label3;
+        private TableLayoutPanel tableLayoutPanel1;
+        private Label label4;
+        private Label label5;
+        private Label lblValNet;
+        private Label label8;
+        private Label label7;
+        private Label label6;
+        private Label lblValTemp;
+        private Label label9;
+        private Label lblValDisc;
+        private Label lblValFreq;
+        private Label lblValRam;
+        private Label lblValLoad;
     }
 }
