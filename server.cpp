@@ -30,9 +30,9 @@ vector<int> clients;	//lista polaczonych do servera clientow
 map<string, string> filesOnTheServer;	//mapa z sciazkami do plikow na serverze i nazwami plkow
 string lastListOfFilesOnTheServer = "";	//ostatnia lista plikow na serwerze
 map<int, string> clientsWithUsernames;	//mapa soketow z odpowiednimi usernames
-mutex clientMutex;
+mutex clientMutex;	//klient ma swoj watek
 
-// Funkcja pomocnicza do odczytu temperatury
+//funkcja do odczytu temperatury
 string get_cpu_temp() {
     ifstream file(TEMP_PATH);
     if (!file.is_open()) return "ERR";
@@ -207,138 +207,134 @@ void handle_client(int clientSocket, string ipAddress)
         int bytesReceived = recv(clientSocket, buffer, 4096, 0);
         string msg(buffer, bytesReceived);
 
-        cout << "RECEIVED MESSAGE BY SERVER:" << msg << endl;
-
         if (messageCount == 0) {
             username = msg;
             clientsWithUsernames.insert({clientSocket, username});
             cout << "[SERVER_INFO] " << username << " has connected to the server" << endl;
             string finalMessage = "[" + username + "]: has connected to the server";
             sendBroadcastMessage(finalMessage);
-	    clientsListUpdate(clientsWithUsernames);
-	    this_thread::sleep_for(chrono::milliseconds(100));
-	    sendCurrentListWithoutThread();
+	    	clientsListUpdate(clientsWithUsernames);
+	    	this_thread::sleep_for(chrono::milliseconds(100));
+	    	sendCurrentListWithoutThread();
         }
         else if(msg.rfind(broadcastPrefix,0) == 0)
-	{
+		{
             cout << "[BROADCAST] message from " << username << ":" << msg.substr(broadcastPrefix.length()) << endl;
             string finalMessage = "[" + username + "] send: " + msg.substr(broadcastPrefix.length());
             sendBroadcastMessage(finalMessage);
         }
-	else if(msg.rfind(unicastPrefix) == 0)
-	{
-		for (auto receiverUser : clientsWithUsernames)
+		else if(msg.rfind(unicastPrefix) == 0)
 		{
-			if(msg.find(receiverUser.second, unicastPrefix.length() + 1) == unicastPrefix.length() + 1)
+			for (auto receiverUser : clientsWithUsernames)
 			{
-	                        cout << "[UNICAST] message from " << username << " to " << receiverUser.second << " : " << msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2) << endl;
-				string finalMessage = "[" + username + "] send to " + receiverUser.second + ": " + msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2);
-				sendUnicastMessage(finalMessage, receiverUser.first, clientSocket);
-				break;
+				if(msg.find(receiverUser.second, unicastPrefix.length() + 1) == unicastPrefix.length() + 1)
+				{
+					cout << "[UNICAST] message from " << username << " to " << receiverUser.second << " : " << msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2) << endl;
+					string finalMessage = "[" + username + "] send to " + receiverUser.second + ": " + msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2);
+					sendUnicastMessage(finalMessage, receiverUser.first, clientSocket);
+					break;
+				}
 			}
 		}
-	}
-	else if(msg.rfind(fileTransferHeadersPrefix, 0) == 0)
-	{
-		msg = msg.substr(fileTransferHeadersPrefix.length());
-		int firstWall = msg.find("|");
-		string sizeOfData = msg.substr(0, firstWall);
-		dataSize = stoi(sizeOfData);
-
-		int secondWall = msg.find("|", firstWall + 1);
-		fileName = msg.substr(firstWall + 1, secondWall - firstWall - 1);
-		cout << "[SERVER INFO] TRANSFER FILE: Size:" << dataSize << " kB" << " filename:" << fileName << endl;
-		string handShakeMessage = "[FILE TRANSFER ACCEPTED]";
-		send(clientSocket, handShakeMessage.c_str(), handShakeMessage.size(), MSG_NOSIGNAL);
-	}
-	else if(msg.rfind(fileTransferDataPrefix, 0) == 0)
-	{
-		string base64DataFile = msg.substr(fileTransferDataPrefix.length());
-		int currentSize = base64DataFile.length();
-
-		while(currentSize < dataSize)
+		else if(msg.rfind(fileTransferHeadersPrefix, 0) == 0)
 		{
-			memset(buffer, 0, 4096);
-			int receivedBytes = recv(clientSocket, buffer, 4096, 0);
-			if(receivedBytes <= 0)
+			msg = msg.substr(fileTransferHeadersPrefix.length());
+			int firstWall = msg.find("|");
+			string sizeOfData = msg.substr(0, firstWall);
+			dataSize = stoi(sizeOfData);
+
+			int secondWall = msg.find("|", firstWall + 1);
+			fileName = msg.substr(firstWall + 1, secondWall - firstWall - 1);
+			cout << "[SERVER INFO] TRANSFER FILE: Size:" << dataSize << " kB" << " filename:" << fileName << endl;
+			string handShakeMessage = "[FILE TRANSFER ACCEPTED]";
+			send(clientSocket, handShakeMessage.c_str(), handShakeMessage.size(), MSG_NOSIGNAL);
+		}
+		else if(msg.rfind(fileTransferDataPrefix, 0) == 0)
+		{
+			string base64DataFile = msg.substr(fileTransferDataPrefix.length());
+			int currentSize = base64DataFile.length();
+
+			while(currentSize < dataSize)
 			{
-				break;
+				memset(buffer, 0, 4096);
+				int receivedBytes = recv(clientSocket, buffer, 4096, 0);
+				if(receivedBytes <= 0)
+				{
+					break;
+				}
+				base64DataFile.append(buffer, receivedBytes);
+				currentSize += receivedBytes;
 			}
-			base64DataFile.append(buffer, receivedBytes);
-			currentSize += receivedBytes;
-		}
-		if(currentSize >= dataSize)
-		{
-			cout << "[SERVER INFO] File has been succesfully uploaded" << endl;
-			saveFileOnDisc(fileName, base64DataFile);
-		}
-	}
-	else if(msg.rfind(fileDownloadedHeadersPrefix, 0) == 0)
-	{
-		string fileName = msg.substr(fileDownloadedHeadersPrefix.length());
-		if (!fileName.empty() && fileName.back() == '|') 
-		{
-        	fileName.pop_back();
-    	}
-		string filePath = "";
-
-		for(auto file : filesOnTheServer)
-		{
-			if(file.second == fileName)
+			if(currentSize >= dataSize)
 			{
-				filePath = file.first;
+				cout << "[SERVER INFO] File has been succesfully uploaded" << endl;
+				saveFileOnDisc(fileName, base64DataFile);
 			}
 		}
-
-		if(fs::exists(filePath))
+		else if(msg.rfind(fileDownloadedHeadersPrefix, 0) == 0)
 		{
+			string fileName = msg.substr(fileDownloadedHeadersPrefix.length());
+			if (!fileName.empty() && fileName.back() == '|') 
+			{
+				fileName.pop_back();
+			}
+			string filePath = "";
+
+			for(auto file : filesOnTheServer)
+			{
+				if(file.second == fileName)
+				{
+					filePath = file.first;
+				}
+			}
+
+			if(fs::exists(filePath))
+			{
+				{
+					lock_guard<mutex> lock(clientMutex);
+					
+					string dataToSend = getBase64String(filePath);
+					
+					if(dataToSend.length() == 0) 
+					{
+						cout << "[ERROR] File empty or read error: " << fileName << endl;
+						continue;
+					}
+
+					long base64Size = dataToSend.length();
+					
+					// [DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|
+					string header = "[DOWNLOADING FILE FROM SERVER]|" + to_string(base64Size) + "|" + fileName + "|";
+					string finalMessage = header + dataToSend;
+
+					cout << "[SERVER INFO] Sending file: " << fileName << " (Size: " << base64Size << " bytes)" << endl;
+					send(clientSocket, finalMessage.c_str(), finalMessage.size(), MSG_NOSIGNAL);
+				}
+			}
+			else
+			{
+				string errorMsg = "[ERROR] File not found: " + fileName;
+				cout << errorMsg << endl;
+			}
+		}
+		else if(msg.rfind(disconnectPrefix) == 0 || bytesReceived <= 0)
+		{
+			string finalMessage = "[" + username + "] Client " + ipAddress + " has disconnected";
+			cout << "[SERVER_INFO] Client " << ipAddress << " " << username << " has disconnected" << endl;
+			sendBroadcastMessage(finalMessage);
 			{
 				lock_guard<mutex> lock(clientMutex);
-				
-				string dataToSend = getBase64String(filePath);
-				
-				if(dataToSend.length() == 0) 
-				{
-					cout << "[ERROR] File empty or read error: " << fileName << endl;
-					continue;
-				}
-
-				long base64Size = dataToSend.length();
-				
-				// [DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|
-				string header = "[DOWNLOADING FILE FROM SERVER]|" + to_string(base64Size) + "|" + fileName + "|";
-				string finalMessage = header + dataToSend;
-
-				cout << "[SERVER INFO] Sending file: " << fileName << " (Size: " << base64Size << " bytes)" << endl;
-				send(clientSocket, finalMessage.c_str(), finalMessage.size(), MSG_NOSIGNAL);
+				clientsWithUsernames.erase(clientSocket);
+				clients.erase(remove(clients.begin(), clients.end(), clientSocket), clients.end());
 			}
-		}
-		else
-		{
-			string errorMsg = "[ERROR] File not found: " + fileName;
-			cout << errorMsg << endl;
-		}
-	}
-	else if(msg.rfind(disconnectPrefix) == 0 || bytesReceived <= 0)
-	{
-            string finalMessage = "[" + username + "] Client " + ipAddress + " has disconnected";
-	    cout << "[SERVER_INFO] Client " << ipAddress << " " << username << " has disconnected" << endl;
-            sendBroadcastMessage(finalMessage);
-            {
-               	lock_guard<mutex> lock(clientMutex);
-                clientsWithUsernames.erase(clientSocket);
-                clients.erase(remove(clients.begin(), clients.end(), clientSocket), clients.end());
-            }
 
-	    clientsListUpdate(clientsWithUsernames);
-            close(clientSocket);
-            break;
-	}
-	messageCount++;
+			clientsListUpdate(clientsWithUsernames);
+			close(clientSocket);
+			break;
+		}
+		messageCount++;
     }
-
-    close(clientSocket);
-
+	close(clientSocket);
     {
         lock_guard<mutex> lock(clientMutex);
         clients.erase(remove(clients.begin(), clients.end(), clientSocket), clients.end());
