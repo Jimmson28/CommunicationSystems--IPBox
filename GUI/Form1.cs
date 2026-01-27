@@ -17,7 +17,7 @@ namespace GUI
         // ZMIENNE DO POBIERANIA
         private bool isDownloading = false;
         private StringBuilder downloadBuffer = new StringBuilder();
-        private long currentDownloadingFileSize; // ZMIANA: long zamiast double (liczymy znaki, nie KB)
+        private long currentDownloadingFileSize;
         private string currentDownloadingFileName = "";
 
         public GUI()
@@ -80,7 +80,7 @@ namespace GUI
             }
         }
 
-        // --- G£ÓWNA FUNKCJA OBS£UGI WIADOMOŒCI ---
+        //funckcja obslugujaca przychodzace wiadomosci z servera
         private void HandleMessage(string message)
         {
             if (this.InvokeRequired)
@@ -89,22 +89,19 @@ namespace GUI
                 return;
             }
 
-            // 1. LOGIKA POBIERANIA (PRIORYTET)
             if (isDownloading)
             {
-                // Sprawdzamy czy w paczce jest nag³ówek (start pobierania w trakcie)
                 string headerPrefix = "[DOWNLOADING FILE FROM SERVER]|";
                 if (message.StartsWith(headerPrefix))
                 {
-                    // Format: [DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|...DANE...
+                    //[DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|
                     string[] parts = message.Split('|');
                     if (parts.Length >= 3)
                     {
-                        currentDownloadingFileSize = long.Parse(parts[1]); // Rozmiar Base64
+                        currentDownloadingFileSize = long.Parse(parts[1]); // rozzmiar base64
                         currentDownloadingFileName = parts[2];
                         downloadBuffer.Clear();
 
-                        // Obliczamy d³ugoœæ nag³ówka, ¿eby wzi¹æ resztê (dane)
                         string fullHeader = parts[0] + "|" + parts[1] + "|" + parts[2] + "|";
 
                         if (message.Length > fullHeader.Length)
@@ -115,25 +112,19 @@ namespace GUI
                 }
                 else
                 {
-                    // Zwyk³a paczka danych - doklejamy
                     downloadBuffer.Append(message);
                 }
 
-                // Sprawdzamy czy mamy ju¿ ca³oœæ
                 if (downloadBuffer.Length >= currentDownloadingFileSize)
                 {
                     FinishDownloading();
                 }
-                return; // Nie pokazujemy danych pliku na czacie!
+                return;
             }
-
-            // 2. LOGIKA CZATU I LIST (jeœli nie pobieramy)
-
-            // Start pobierania (Nag³ówek z³apany gdy isDownloading = false)
             if (message.StartsWith("[DOWNLOADING FILE FROM SERVER]|"))
             {
                 isDownloading = true;
-                HandleMessage(message); // Rekurencja, ¿eby wpad³o w if(isDownloading)
+                HandleMessage(message);
             }
             else if (message.Contains("[CLIENTSLIST UPDATE]"))
             {
@@ -168,15 +159,13 @@ namespace GUI
             }
             else
             {
-                // Zwyk³a wiadomoœæ czatu
                 string timestamp = DateTime.Now.ToString("HH:mm:ss");
-                // Dodajemy [TCP] wizualnie tutaj, bo usunêliœmy z biblioteki
                 chatWindow.AppendText($"[{timestamp}] [TCP]: {message}{Environment.NewLine}");
                 chatWindow.SelectionStart = chatWindow.Text.Length;
                 chatWindow.ScrollToCaret();
             }
         }
-
+        //funckja obslugi logow systemowych
         private void HandleLog(string log)
         {
             if (this.InvokeRequired)
@@ -186,8 +175,6 @@ namespace GUI
             }
             chatWindow.AppendText($"[SYSTEM]: {log}{Environment.NewLine}");
         }
-
-        // --- FUNKCJA KOÑCZ¥CA POBIERANIE ---
         private void FinishDownloading()
         {
             isDownloading = false;
@@ -196,7 +183,6 @@ namespace GUI
                 string finalBase64 = downloadBuffer.ToString();
                 byte[] fileBytes = Convert.FromBase64String(finalBase64);
 
-                // Œcie¿ka do folderu Pobrane
                 string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 string downloadsFolder = Path.Combine(userProfile, "Downloads");
                 string savePath = Path.Combine(downloadsFolder, "Pobrane_" + currentDownloadingFileName);
@@ -205,23 +191,18 @@ namespace GUI
 
                 MessageBox.Show($"File {currentDownloadingFileName} has been downloaded to:\n{savePath}");
 
-                // Usuwamy z kolejki dopiero po sukcesie
                 if (downloadQueue.Count > 0) downloadQueue.Dequeue();
-
-                // Pobieramy nastêpny plik z kolejki
                 sendInformationToTheServerAboutFilesToDownload();
             }
             catch (Exception e)
             {
                 MessageBox.Show($"Failure during saving file {currentDownloadingFileName}: {e.Message}");
-                // Nawet jak b³¹d, usuwamy z kolejki ¿eby nie zablokowaæ programu
                 if (downloadQueue.Count > 0) downloadQueue.Dequeue();
                 isDownloading = false;
                 downloadBuffer.Clear();
             }
         }
-
-        // --- OBS£UGA DRAG & DROP (UPLOAD) ---
+        //drag an drop panel
         private void dropPanel_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -296,12 +277,11 @@ namespace GUI
             }
         }
 
-        // --- AKTUALIZACJA LISTY PLIKÓW ---
+        //update listy plikow na dysku serwera w gui
         private void handleFilesList(string message)
         {
             filesOnTheServer.Items.Clear();
 
-            // Poprawka: Usunêliœmy [TCP]:, wiêc nag³ówek ma dok³adnie 21 znaków
             if (message.Length < 21) return;
             string onlyFileNames = message.Substring(21);
 
@@ -314,14 +294,12 @@ namespace GUI
                 if (string.IsNullOrWhiteSpace(fileName)) continue;
 
                 ListViewItem item = new ListViewItem(fileName);
-                size = size.Replace(".", ","); // Kosmetyka dla polskiego systemu
+                size = size.Replace(".", ",");
 
                 item.SubItems.Add(size + " KB");
                 filesOnTheServer.Items.Add(item);
             }
         }
-
-        // --- START POBIERANIA (INIT) ---
         private void sendInformationToTheServerAboutFilesToDownload()
         {
             if (downloadQueue.Count > 0)
@@ -331,13 +309,8 @@ namespace GUI
                     ListViewItem firstItem = downloadQueue.Peek();
                     currentDownloadingFileName = firstItem.Text;
 
-                    // Serwer (C++) wyœle nam w nag³ówku dok³adny rozmiar,
-                    // wiêc tutaj tylko wysy³amy ¿¹danie. 
-                    // Rozmiar w GUI (kB) jest tylko dla oka, nie u¿ywamy go do logiki pêtli.
-
                     client.SendTcp($"DOWNLOADFILE|{currentDownloadingFileName}|");
 
-                    // Resetujemy bufor na wszelki wypadek
                     downloadBuffer.Clear();
                 }
                 catch (Exception ex)
@@ -352,8 +325,6 @@ namespace GUI
                 MessageBox.Show("All files processed from queue.");
             }
         }
-
-        // --- MENU KONTEKSTOWE (Prawy Przycisk) ---
         private void downloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (filesOnTheServer.SelectedItems.Count == 0) return;
@@ -362,7 +333,6 @@ namespace GUI
             {
                 downloadQueue.Enqueue(file);
             }
-            // Jeœli nic siê aktualnie nie pobiera, startujemy kolejkê
             if (!isDownloading)
             {
                 sendInformationToTheServerAboutFilesToDownload();
@@ -371,14 +341,13 @@ namespace GUI
 
         private void delateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // Logika usuwania (wymaga obs³ugi po stronie serwera nag³ówka DELETE)
             if (filesOnTheServer.SelectedItems.Count > 0)
             {
                 string fileName = filesOnTheServer.SelectedItems[0].Text;
                 var res = MessageBox.Show($"Delete {fileName}?", "Confirm", MessageBoxButtons.YesNo);
                 if (res == DialogResult.Yes)
                 {
-                    client.SendTcp($"DELETE|{fileName}"); // Wymaga obs³ugi w C++
+                    client.SendTcp($"DELETE|{fileName}");
                 }
             }
         }
@@ -398,12 +367,10 @@ namespace GUI
             if (navigationList != null) { /* ... */ }
         }
 
-        // --- AKTUALIZACJA LISTY KLIENTÓW ---
+        //update listy polaczonych z serverem klientow
         private void handleClientsList(string message)
         {
             clientsList.Items.Clear();
-
-            // Poprawka: Nag³ówek "[CLIENTSLIST UPDATE] " ma 21 znaków
             if (message.Length < 21) return;
 
             string onlyNames = message.Substring(21);
