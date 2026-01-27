@@ -2,7 +2,8 @@
  * Remote System Monitor - Concurrent Server (Multithreaded)
  * Obsługa WIELU klientów jednocześnie.
  */
-
+#include "base64.h"
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -17,14 +18,18 @@
 #include <mutex>
 #include <algorithm>
 #include <map>
+#include <bits/stdc++.h>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 #define PORT 8080
 #define TEMP_PATH "/sys/class/thermal/thermal_zone0/temp"
 
 vector<int> clients;	//lista polaczonych do servera clientow
-map<int, string> clientsWithUsernames;
+map<string, string> filesOnTheServer;	//mapa z sciazkami do plikow na serverze i nazwami plkow
+string lastListOfFilesOnTheServer = "";	//ostatnia lista plikow na serwerze
+map<int, string> clientsWithUsernames;	//mapa soketow z odpowiednimi usernames
 mutex clientMutex;
 
 // Funkcja pomocnicza do odczytu temperatury
@@ -40,7 +45,7 @@ string get_cpu_temp() {
         return "N/A";
     }
 }
-
+//funkcja do wysylania wiadomosci w trybie broadcast
 void sendBroadcastMessage(string message)
 {
 	lock_guard<mutex> lock(clientMutex);
@@ -50,13 +55,13 @@ void sendBroadcastMessage(string message)
 		send(sock, message.c_str(), message.size(), MSG_NOSIGNAL);
 	}
 }
-
+//funkcja do wysylania wiadomosci w trybie unicast
 void sendUnicastMessage(string message, int receiverSocket, int senderSocket)
 {
 	send(receiverSocket, message.c_str(), message.size(), MSG_NOSIGNAL);
 	send(senderSocket, message.c_str(), message.size(), MSG_NOSIGNAL);
 }
-
+//funckja do aktualizowania listy aktywnych klientow
 void clientsListUpdate(map<int, string> clientsList)
 {
 	string clientsNames = "";
@@ -67,8 +72,115 @@ void clientsListUpdate(map<int, string> clientsList)
 	string finalMessage = "[CLIENTSLIST UPDATE] " + clientsNames;
 	sendBroadcastMessage(finalMessage);
 }
+//funkcja do zapisaywania plikow na serwerze
+void saveFileOnDisc(string fileName, string base64Data)
+{
+    try
+    {
+        string decodedBytes = base64_decode(base64Data);
+        string folderName = "uploads";
+        if(!fs::exists(folderName))
+        {
+            fs::create_directory(folderName);
+        }
 
-void handle_client(int clientSocket, string ipAddress) 
+        fs::path fullPath = fs::path(folderName) / fileName;
+        ofstream file(fullPath, ios::binary);
+
+        if(file.is_open())
+        {
+            file.write(decodedBytes.data(), decodedBytes.size());
+            file.close();
+        }
+	filesOnTheServer.insert({fullPath, fileName});
+    }
+    catch (const exception& e) {
+        cerr << "[DISK CRITICAL ERROR] " << e.what() << endl;
+    }
+}
+//funkcja do zakodowania pliku do base64 po filepath
+string getBase64String(string filePath)
+{
+	ifstream file(filePath, ios::binary | ios::ate);
+	if(!file.is_open()){return "";}
+
+	streamsize size = file.tellg();
+	file.seekg(0, ios::beg);
+
+	vector<char> buffor(size);
+	if(file.read(buffor.data(), size))
+	{
+		string encodedData = base64_encode((const unsigned char*)buffor.data(), buffor.size());
+		return encodedData;
+	}
+	return "";
+}
+//funkcja do aktualizowania listy plikow na serwerze wysylajaca dane do klienta-gui
+void updateFilesList()
+{
+	filesOnTheServer.clear();
+	string directoryPath = "uploads";
+	for(const auto& entry:fs::directory_iterator(directoryPath))
+	{
+		if(entry.is_regular_file())
+		{
+			string fullPath = entry.path().string();
+			string fullName = entry.path().filename().string();
+			filesOnTheServer.insert({fullPath, fullName});
+		}
+	}
+}
+//funckja wysylajaca dane do klienta z lista plikow korzystajaca z innego watku w celu unikniecia bledow w przypadku usuniecia plikow z servera przez administratora
+void sendUpdatedFilesList()
+{
+	while(true)
+	{
+		this_thread::sleep_for(chrono::seconds(10));
+		{
+			lock_guard<mutex> lock(clientMutex);
+			updateFilesList();
+		}
+
+		string currentList = "";
+		for(auto file : filesOnTheServer)
+		{
+			double fileSize = fs::file_size(file.first) / 1024.0;
+			string size = to_string(fileSize);
+			currentList = currentList + file.second + ',' + size + ',';
+		}
+
+		if(currentList != lastListOfFilesOnTheServer)
+		{
+			cout << "[SERVER INFO] list of files on the server has changed" << endl;
+			lastListOfFilesOnTheServer = currentList;
+			string finalMessage = "[FILES ON THE SERVER]" + currentList;
+			cout << finalMessage << endl;
+			sendBroadcastMessage(finalMessage);
+		}
+
+	}
+}
+//funckja do jednorazowej aktualizacji fileListOnTheServer bez petli
+void sendCurrentListWithoutThread()
+{
+	{
+		lock_guard<mutex> lock(clientMutex);
+		updateFilesList();
+	}
+	string list = "";
+	for(auto file : filesOnTheServer)
+	{
+		double fileSize = fs::file_size(file.first) / 1024.0;
+		string size = to_string(fileSize);
+		list = list + file.second + ',' + size + ',';
+		lastListOfFilesOnTheServer = list;
+	}
+	string finalMessage = "[FILES ON THE SERVER]" + list;
+	cout << finalMessage << endl;
+	sendBroadcastMessage(finalMessage);
+}
+//funkcja oblsugujaca pojedynczego klienta
+void handle_client(int clientSocket, string ipAddress)
 {
     cout << "[SERVER INFO] New Client has joined: " << ipAddress << endl;
 
@@ -80,6 +192,12 @@ void handle_client(int clientSocket, string ipAddress)
     string broadcastPrefix = "BROADCAST";
     string unicastPrefix = "UNICAST";
     string disconnectPrefix = "DISCONNECT";
+    string fileTransferHeadersPrefix = "FILEHEADERS|";
+    string fileTransferDataPrefix = "FILEDATA|";
+    string fileDownloadedHeadersPrefix = "DOWNLOADFILE|";
+
+    string fileName = "";
+    int dataSize = 0;
     string username;
     char buffer[4096];
     int messageCount = 0;
@@ -89,6 +207,8 @@ void handle_client(int clientSocket, string ipAddress)
         int bytesReceived = recv(clientSocket, buffer, 4096, 0);
         string msg(buffer, bytesReceived);
 
+        cout << "RECEIVED MESSAGE BY SERVER:" << msg << endl;
+
         if (messageCount == 0) {
             username = msg;
             clientsWithUsernames.insert({clientSocket, username});
@@ -96,10 +216,12 @@ void handle_client(int clientSocket, string ipAddress)
             string finalMessage = "[" + username + "]: has connected to the server";
             sendBroadcastMessage(finalMessage);
 	    clientsListUpdate(clientsWithUsernames);
+	    this_thread::sleep_for(chrono::milliseconds(100));
+	    sendCurrentListWithoutThread();
         }
         else if(msg.rfind(broadcastPrefix,0) == 0)
 	{
-            cout << "[BROADCAST] message from " << username << " " << msg.substr(broadcastPrefix.length()) << endl;
+            cout << "[BROADCAST] message from " << username << ":" << msg.substr(broadcastPrefix.length()) << endl;
             string finalMessage = "[" + username + "] send: " + msg.substr(broadcastPrefix.length());
             sendBroadcastMessage(finalMessage);
         }
@@ -107,15 +229,94 @@ void handle_client(int clientSocket, string ipAddress)
 	{
 		for (auto receiverUser : clientsWithUsernames)
 		{
-			int userNameLength = receiverUser.second.length();
-			int unicastPrefixLength = unicastPrefix.length();
-			if(msg.find(receiverUser.second, unicastPrefixLength + 1) == unicastPrefixLength + 1)
+			if(msg.find(receiverUser.second, unicastPrefix.length() + 1) == unicastPrefix.length() + 1)
 			{
-	                        cout << "[UNICAST] message from " << username << " to " << receiverUser.second << " : " << msg.substr(unicastPrefixLength + userNameLength + 2) << endl;
-				string finalMessage = "[" + username + "] send to " + receiverUser.second + ": " + msg.substr(unicastPrefixLength + userNameLength + 2);
+	                        cout << "[UNICAST] message from " << username << " to " << receiverUser.second << " : " << msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2) << endl;
+				string finalMessage = "[" + username + "] send to " + receiverUser.second + ": " + msg.substr(unicastPrefix.length() + receiverUser.second.length() + 2);
 				sendUnicastMessage(finalMessage, receiverUser.first, clientSocket);
 				break;
 			}
+		}
+	}
+	else if(msg.rfind(fileTransferHeadersPrefix, 0) == 0)
+	{
+		msg = msg.substr(fileTransferHeadersPrefix.length());
+		int firstWall = msg.find("|");
+		string sizeOfData = msg.substr(0, firstWall);
+		dataSize = stoi(sizeOfData);
+
+		int secondWall = msg.find("|", firstWall + 1);
+		fileName = msg.substr(firstWall + 1, secondWall - firstWall - 1);
+		cout << "[SERVER INFO] TRANSFER FILE: Size:" << dataSize << " kB" << " filename:" << fileName << endl;
+		string handShakeMessage = "[FILE TRANSFER ACCEPTED]";
+		send(clientSocket, handShakeMessage.c_str(), handShakeMessage.size(), MSG_NOSIGNAL);
+	}
+	else if(msg.rfind(fileTransferDataPrefix, 0) == 0)
+	{
+		string base64DataFile = msg.substr(fileTransferDataPrefix.length());
+		int currentSize = base64DataFile.length();
+
+		while(currentSize < dataSize)
+		{
+			memset(buffer, 0, 4096);
+			int receivedBytes = recv(clientSocket, buffer, 4096, 0);
+			if(receivedBytes <= 0)
+			{
+				break;
+			}
+			base64DataFile.append(buffer, receivedBytes);
+			currentSize += receivedBytes;
+		}
+		if(currentSize >= dataSize)
+		{
+			cout << "[SERVER INFO] File has been succesfully uploaded" << endl;
+			saveFileOnDisc(fileName, base64DataFile);
+		}
+	}
+	else if(msg.rfind(fileDownloadedHeadersPrefix, 0) == 0)
+	{
+		string fileName = msg.substr(fileDownloadedHeadersPrefix.length());
+		if (!fileName.empty() && fileName.back() == '|') 
+		{
+        	fileName.pop_back();
+    	}
+		string filePath = "";
+
+		for(auto file : filesOnTheServer)
+		{
+			if(file.second == fileName)
+			{
+				filePath = file.first;
+			}
+		}
+
+		if(fs::exists(filePath))
+		{
+			{
+				lock_guard<mutex> lock(clientMutex);
+				
+				string dataToSend = getBase64String(filePath);
+				
+				if(dataToSend.length() == 0) 
+				{
+					cout << "[ERROR] File empty or read error: " << fileName << endl;
+					continue;
+				}
+
+				long base64Size = dataToSend.length();
+				
+				// [DOWNLOADING FILE FROM SERVER]|ROZMIAR|NAZWA|
+				string header = "[DOWNLOADING FILE FROM SERVER]|" + to_string(base64Size) + "|" + fileName + "|";
+				string finalMessage = header + dataToSend;
+
+				cout << "[SERVER INFO] Sending file: " << fileName << " (Size: " << base64Size << " bytes)" << endl;
+				send(clientSocket, finalMessage.c_str(), finalMessage.size(), MSG_NOSIGNAL);
+			}
+		}
+		else
+		{
+			string errorMsg = "[ERROR] File not found: " + fileName;
+			cout << errorMsg << endl;
 		}
 	}
 	else if(msg.rfind(disconnectPrefix) == 0 || bytesReceived <= 0)
@@ -145,12 +346,12 @@ void handle_client(int clientSocket, string ipAddress)
 }
 
 int main() {
-    
+
     int listening = socket(AF_INET, SOCK_STREAM, 0);
-    if (listening == -1) 
-    
-    { cerr << "Socket error" << endl; 
-        return -1; 
+    if (listening == -1)
+
+    { cerr << "Socket error" << endl;
+        return -1;
     }
 
     int opt = 1;
@@ -161,18 +362,21 @@ int main() {
     hint.sin_port = htons(PORT);
     hint.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(listening, (sockaddr*)&hint, sizeof(hint)) == -1) 
-    { 
-        cerr << "Bind error" << endl; 
-        return -1; 
+    if (bind(listening, (sockaddr*)&hint, sizeof(hint)) == -1)
+    {
+        cerr << "Bind error" << endl;
+        return -1;
     }
-    if (listen(listening, SOMAXCONN) == -1) 
-    { 
-        cerr << "Listen error" << endl; 
-        return -1; 
+    if (listen(listening, SOMAXCONN) == -1)
+    {
+        cerr << "Listen error" << endl;
+        return -1;
     }
 
     cout << "[SERVER INFO] MULTITHREAD SERVER STARTS ON PORT " << PORT << endl;
+
+    thread filesMonitor(sendUpdatedFilesList);
+    filesMonitor.detach();
 
     while (true) {
         sockaddr_in client;
@@ -189,13 +393,13 @@ int main() {
         inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
         string clientIP(host);
 
-        // Tworzymy nowy wątek (thread), przekazujemy mu funkcję handle_client 
+        // Tworzymy nowy wątek (thread), przekazujemy mu funkcję handle_client
         // oraz argumenty (socket i IP).
         thread t(handle_client, clientSocket, clientIP);
-        
+
         // .detach() oznacza: "Leć wolno, nie będę na ciebie czekać w main()".
         // Dzięki temu wątek działa w tle, a pętla while wraca do początku czekać na kolejnego.
-        t.detach(); 
+        t.detach();
     }
 
     close(listening);
