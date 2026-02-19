@@ -1,7 +1,0 @@
-C:\Build\CS\ClientApp.exe
-C:\Build\CS\ClientApp.dll
-C:\Build\CS\ClientApp.deps.json
-C:\Build\CS\ClientApp.runtimeconfig.json
-C:\Build\CS\ClientApp.pdb
-C:\Build\CS\ChatLogic.dll
-C:\Build\CS\ChatLogic.pdb
