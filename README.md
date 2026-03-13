@@ -23,5 +23,5 @@ base64.cpp/.h    → Base64 encode/decode utility
 ServerApp/       → C# server-side logic (optional managed layer)
 ClientApp/       → C# network client logic
 ChatLogic/       → Message handling, unicast/broadcast routing
-GUI/             → Desktop GUI (WinForms/WPF)
+GUI/             → Desktop GUI (WinForms)
 ```
